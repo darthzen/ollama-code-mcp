@@ -1,0 +1,33 @@
+# ClusterIssuer for Let's Encrypt via Cloudflare DNS-01.
+#
+# Apply this AFTER installing cert-manager (https://cert-manager.io/docs/installation/)
+# and creating the API-token secret it references:
+#
+#   kubectl -n cert-manager create secret generic cloudflare-api-token \
+#     --from-literal=api-token=<zone-scoped token: Zone.Zone Read + Zone.DNS Edit on ash4d.com>
+#
+# NOT in kustomization.yaml on purpose: it's cluster-scoped, depends on
+# cert-manager CRDs, and only needs applying once:
+#
+#   kubectl apply -f k8s/cert-manager-issuer.yaml
+#
+# DNS-01 is required (not HTTP-01) because mcp-ollama.ash4d.com resolves to a
+# private IP that Let's Encrypt can't reach. Validation succeeds only once
+# ash4d.com's nameservers point at Cloudflare; until then cert-manager
+# back-off-retries harmlessly.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-dns
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: rick@theashfords.org
+    privateKeySecretRef:
+      name: letsencrypt-dns-account-key
+    solvers:
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              name: cloudflare-api-token
+              key: api-token
