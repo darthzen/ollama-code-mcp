@@ -5,10 +5,10 @@ metadata:
   labels:
     app.kubernetes.io/name: ollama-code-mcp
 spec:
-  # ClusterIP by default -- Claude Code running on the same LAN can reach
-  # this via `kubectl port-forward`, or switch this to LoadBalancer (as the
-  # ollama-current-values.yaml setup does for Ollama itself) to expose it
-  # directly on the LAN.
+  # ClusterIP -- external access goes through ingress.yaml
+  # (https://mcp-ollama.ash4d.com/mcp), since Claude's custom-connector UI
+  # requires an https URL. `kubectl port-forward` remains an option for
+  # ad-hoc local testing.
   type: ClusterIP
   selector:
     app.kubernetes.io/name: ollama-code-mcp

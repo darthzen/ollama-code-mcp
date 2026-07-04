@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ollama-code-mcp
+  labels:
+    app.kubernetes.io/name: ollama-code-mcp
+  annotations:
+    # Uncomment and set to your cert-manager issuer to have the TLS secret
+    # provisioned automatically (DNS-01 required -- mcp-ollama.ash4d.com
+    # resolves to a private IP, so HTTP-01 cannot validate):
+    # cert-manager.io/cluster-issuer: letsencrypt-dns
+    #
+    # Without cert-manager, create the secret yourself from an existing
+    # (e.g. wildcard *.ash4d.com) cert:
+    #   kubectl create secret tls mcp-ollama-ash4d-tls --cert=fullchain.pem --key=privkey.pem
+spec:
+  tls:
+    - hosts: [mcp-ollama.ash4d.com]
+      secretName: mcp-ollama-ash4d-tls
+  rules:
+    - host: mcp-ollama.ash4d.com
+      http:
+        paths:
+          - path: /mcp
+            pathType: Prefix
+            backend:
+              service:
+                name: ollama-code-mcp
+                port:
+                  number: 8765

@@ -193,9 +193,13 @@ kubectl apply -f k8s/service.yaml
 (e.g. the cluster-internal `http://ollama.ollama.svc.cluster.local:11434`
 when both run in the same cluster). Adjust the
 image reference in `k8s/deployment.yaml` to wherever you push the built
-image. The manifests expose the server via `streamable-http` on a
-`ClusterIP` service; use a LAN-reachable `LoadBalancer` or port-forward if
-Claude Code runs outside the cluster.
+image. The manifests expose the server via `streamable-http` on a `ClusterIP`
+service fronted by an Ingress at `https://mcp-ollama.ash4d.com/mcp`
+(`k8s/ingress.yaml`). TLS is required because Claude's custom-connector UI
+only accepts https URLs; the host resolves to a private IP, so provision the
+cert via cert-manager DNS-01 or an existing wildcard secret (see the comments
+in `ingress.yaml`). Register the connector in Claude (desktop or Claude Code)
+as `https://mcp-ollama.ash4d.com/mcp`.
 
 ## Security notes
 
