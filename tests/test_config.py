@@ -17,9 +17,9 @@ def test_defaults(monkeypatch):
 
 
 def test_base_url_scheme_is_added_when_missing(monkeypatch):
-    monkeypatch.setenv("OLLAMA_BASE_URL", "192.168.1.50:11434")
+    monkeypatch.setenv("OLLAMA_BASE_URL", "ollama.ash4d.com:11434")
     settings = load_settings()
-    assert settings.base_url == "http://192.168.1.50:11434"
+    assert settings.base_url == "http://ollama.ash4d.com:11434"
 
 
 def test_base_url_trailing_slash_is_stripped(monkeypatch):
