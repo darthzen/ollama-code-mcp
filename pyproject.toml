@@ -1,0 +1,33 @@
+[project]
+name = "ollama-code-mcp"
+version = "0.1.0"
+description = "MCP server that delegates coding tasks from Claude Code to a local/LAN Ollama instance"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [{ name = "Rick Ashford" }]
+dependencies = [
+    "mcp>=1.6.0",
+    "httpx>=0.27.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "respx>=0.21.0",
+]
+
+[project.scripts]
+ollama-code-mcp = "ollama_code_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ollama_code_mcp"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
