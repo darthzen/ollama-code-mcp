@@ -1,4 +1,4 @@
-FROM python:3.12-slim AS base
+FROM registry.suse.com/bci/python:3.11
 
 WORKDIR /app
 
