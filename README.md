@@ -3,7 +3,7 @@
 An [MCP](https://modelcontextprotocol.io) server that lets Claude Code delegate
 coding tasks to a local (or LAN) [Ollama](https://ollama.com) instance running
 a Qwen3 model. Point it at a GPU box on your network -- a Tesla V100 running
-`qwen3:32b`, for example -- and Claude Code can hand off boilerplate
+`qwen3-coder:30b`, for example -- and Claude Code can hand off boilerplate
 generation, test writing, diff review, and batch refactors to it instead of
 spending cloud tokens and context window on them.
 
@@ -82,8 +82,8 @@ runs on a dedicated GPU host:
     "ollama-code": {
       "command": "ollama-code-mcp",
       "env": {
-        "OLLAMA_BASE_URL": "http://192.168.1.50:11434",
-        "OLLAMA_MODEL": "qwen3:32b",
+        "OLLAMA_BASE_URL": "http://ollama.ash4d.com:11434",
+        "OLLAMA_MODEL": "qwen3-coder:30b",
         "OLLAMA_MCP_ALLOWED_DIR": "/Users/you/code"
       }
     }
@@ -99,7 +99,7 @@ Or run it straight from the repo without installing:
     "ollama-code": {
       "command": "/path/to/ollama-code-mcp/.venv/bin/python",
       "args": ["-m", "ollama_code_mcp.server"],
-      "env": { "OLLAMA_BASE_URL": "http://192.168.1.50:11434" }
+      "env": { "OLLAMA_BASE_URL": "http://ollama.ash4d.com:11434" }
     }
   }
 }
@@ -152,7 +152,7 @@ quick, low-stakes generations or explanations where latency matters more.
 ## Running standalone
 
 ```bash
-OLLAMA_BASE_URL=http://192.168.1.50:11434 ollama-code-mcp
+OLLAMA_BASE_URL=http://ollama.ash4d.com:11434 ollama-code-mcp
 ```
 
 By default this speaks MCP over stdio, which is what Claude Code expects
@@ -165,7 +165,7 @@ service instead (for the Docker/k8s deployment below), set
 ```bash
 docker build -t ollama-code-mcp .
 docker run --rm -p 8765:8765 \
-  -e OLLAMA_BASE_URL=http://192.168.1.50:11434 \
+  -e OLLAMA_BASE_URL=http://ollama.ash4d.com:11434 \
   -e MCP_TRANSPORT=streamable-http \
   -v /path/to/your/code:/workspace \
   -e OLLAMA_MCP_ALLOWED_DIR=/workspace \
@@ -188,8 +188,10 @@ kubectl apply -f k8s/deployment.yaml
 kubectl apply -f k8s/service.yaml
 ```
 
-Edit `k8s/configmap.yaml` to point `OLLAMA_BASE_URL` at your Ollama
-service (e.g. `http://ollama.ollama.svc.cluster.local:11434`) and adjust the
+`k8s/configmap.yaml` ships pointing `OLLAMA_BASE_URL` at
+`http://ollama.ash4d.com:11434`; edit it if your Ollama lives elsewhere
+(e.g. the cluster-internal `http://ollama.ollama.svc.cluster.local:11434`
+when both run in the same cluster). Adjust the
 image reference in `k8s/deployment.yaml` to wherever you push the built
 image. The manifests expose the server via `streamable-http` on a
 `ClusterIP` service; use a LAN-reachable `LoadBalancer` or port-forward if

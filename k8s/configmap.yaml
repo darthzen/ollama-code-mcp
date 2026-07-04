@@ -5,10 +5,11 @@ metadata:
   labels:
     app.kubernetes.io/name: ollama-code-mcp
 data:
-  # Point this at Ollama's in-cluster service DNS name, not a LAN IP, when
-  # both are deployed to the same k3s cluster.
-  OLLAMA_BASE_URL: "http://ollama.ollama.svc.cluster.local:11434"
-  OLLAMA_MODEL: "qwen3:32b"
+  # ollama.ash4d.com resolves to the Ollama LoadBalancer; swap in the
+  # cluster-internal service DNS name instead if you ever run Ollama and this
+  # server in the same cluster and want to skip the external hop.
+  OLLAMA_BASE_URL: "http://ollama.ash4d.com:11434"
+  OLLAMA_MODEL: "qwen3-coder:30b"
   OLLAMA_TIMEOUT: "900"
   OLLAMA_NUM_CTX: "8192"
   OLLAMA_MCP_ALLOWED_DIR: "/workspace"
