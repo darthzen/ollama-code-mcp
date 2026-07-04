@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ollama-code-mcp-config
+  labels:
+    app.kubernetes.io/name: ollama-code-mcp
+data:
+  # Point this at Ollama's in-cluster service DNS name, not a LAN IP, when
+  # both are deployed to the same k3s cluster.
+  OLLAMA_BASE_URL: "http://ollama.ollama.svc.cluster.local:11434"
+  OLLAMA_MODEL: "qwen3:32b"
+  OLLAMA_TIMEOUT: "900"
+  OLLAMA_NUM_CTX: "8192"
+  OLLAMA_MCP_ALLOWED_DIR: "/workspace"
+  OLLAMA_MCP_MAX_BATCH_FILES: "20"
+  OLLAMA_MCP_DEFAULT_THINK: "true"
+  MCP_TRANSPORT: "streamable-http"
+  MCP_HOST: "0.0.0.0"
+  MCP_PORT: "8765"

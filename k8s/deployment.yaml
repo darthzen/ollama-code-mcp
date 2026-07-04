@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama-code-mcp
+  labels:
+    app.kubernetes.io/name: ollama-code-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ollama-code-mcp
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ollama-code-mcp
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: ollama-code-mcp
+          # Replace with wherever you push the image built from ./Dockerfile.
+          image: ghcr.io/darthzen/ollama-code-mcp:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mcp
+              containerPort: 8765
+          envFrom:
+            - configMapRef:
+                name: ollama-code-mcp-config
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          readinessProbe:
+            tcpSocket:
+              port: mcp
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: mcp
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+      volumes:
+        # file-aware tools and batch_refactor read/write under /workspace.
+        # An emptyDir is fine for stateless review/generate/explain calls;
+        # if you want batch_refactor to touch a real checkout, replace this
+        # with a PVC or hostPath mounting your repo instead.
+        - name: workspace
+          emptyDir: {}
