@@ -16,6 +16,19 @@ def test_build_messages_appends_no_think_switch():
     assert messages[1]["content"].endswith("/no_think")
 
 
+def test_build_messages_qwen_style_is_default():
+    messages = build_messages("sys", "do the thing", think=True, style="qwen")
+    assert messages[1]["content"].endswith("/think")
+
+
+def test_build_messages_none_style_omits_switch():
+    for think in (True, False):
+        messages = build_messages("sys", "do the thing", think=think, style="none")
+        assert messages[1]["content"] == "do the thing"
+        assert "/think" not in messages[1]["content"]
+        assert "/no_think" not in messages[1]["content"]
+
+
 def test_split_thinking_extracts_reasoning_block():
     text = "<think>step by step reasoning</think>final answer here"
     thinking, answer = split_thinking(text)

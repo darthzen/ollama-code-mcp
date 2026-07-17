@@ -10,10 +10,24 @@ def test_defaults(monkeypatch):
         "OLLAMA_MCP_ALLOWED_DIR",
     ]:
         monkeypatch.delenv(key, raising=False)
+    monkeypatch.delenv("OLLAMA_THINK_STYLE", raising=False)
     settings = load_settings()
     assert settings.base_url == "http://localhost:11434"
     assert settings.timeout == 900.0
     assert settings.transport == "stdio"
+    assert settings.think_style == "qwen"
+
+
+def test_think_style_parsing(monkeypatch):
+    monkeypatch.setenv("OLLAMA_THINK_STYLE", "none")
+    assert load_settings().think_style == "none"
+    monkeypatch.setenv("OLLAMA_THINK_STYLE", "NONE")   # case-insensitive
+    assert load_settings().think_style == "none"
+
+
+def test_invalid_think_style_falls_back_to_default(monkeypatch):
+    monkeypatch.setenv("OLLAMA_THINK_STYLE", "banana")
+    assert load_settings().think_style == "qwen"
 
 
 def test_base_url_scheme_is_added_when_missing(monkeypatch):

@@ -124,6 +124,7 @@ All configuration is via environment variables:
 | `OLLAMA_MCP_MAX_FILE_BYTES` | `1000000` | Per-file size cap for server-side reads. |
 | `OLLAMA_MCP_MAX_BATCH_FILES` | `20` | Max files processed per `batch_refactor` call. |
 | `OLLAMA_MCP_DEFAULT_THINK` | `true` | Default value for each tool's `think` parameter when the caller omits it. |
+| `OLLAMA_THINK_STYLE` | `qwen` | How the think toggle reaches the model. `qwen`: append Qwen3's `/think`\|`/no_think` switch. `none`: append nothing — use for non-Qwen models (DeepSeek-R1 distills, Llama), where the switch is prompt noise that can mislead a lighter model. Unknown values fall back to `qwen`. |
 | `MCP_TRANSPORT` | `stdio` | `stdio` (spawned locally by Claude Code), `sse`, or `streamable-http` (for remote/k8s deployment). |
 | `MCP_HOST` | `0.0.0.0` | Bind host for `sse`/`streamable-http` transports. |
 | `MCP_PORT` | `8765` | Bind port for `sse`/`streamable-http` transports. |

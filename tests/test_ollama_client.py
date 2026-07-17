@@ -24,6 +24,7 @@ def make_settings(**overrides) -> Settings:
         max_file_bytes=1_000_000,
         max_batch_files=20,
         default_think=True,
+        think_style="qwen",
         transport="stdio",
         host="0.0.0.0",
         port=8765,

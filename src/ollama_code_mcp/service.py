@@ -74,7 +74,7 @@ class CodeService:
     async def _run_chat(
         self, tool_name: str, system: str, user_content: str, think: bool
     ) -> str:
-        messages = build_messages(system, user_content, think)
+        messages = build_messages(system, user_content, think, self._settings.think_style)
         try:
             result = await self._client.chat(messages)
         except _OLLAMA_ERRORS as exc:
@@ -249,7 +249,9 @@ class CodeService:
                 f"Code to refactor (source: {label}):\n```\n{original}\n```\n\n"
                 f"Instruction: {instruction.strip()}"
             )
-            messages = build_messages(REFACTOR_SYSTEM, user_content, think_resolved)
+            messages = build_messages(
+                REFACTOR_SYSTEM, user_content, think_resolved, self._settings.think_style
+            )
             try:
                 result = await self._client.chat(messages)
             except _OLLAMA_ERRORS as exc:

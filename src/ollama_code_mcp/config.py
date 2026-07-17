@@ -10,6 +10,8 @@ DEFAULT_MODEL = "qwen3-coder"
 DEFAULT_TIMEOUT_SECONDS = 900.0  # 15 minutes: large-context refactors on a single GPU can be slow
 DEFAULT_CONNECT_TIMEOUT_SECONDS = 10.0
 DEFAULT_NUM_CTX = 8192
+DEFAULT_THINK_STYLE = "qwen"      # how the think toggle is expressed in the prompt
+THINK_STYLES = ("qwen", "none")  # "qwen": /think|/no_think switch; "none": append nothing
 DEFAULT_MAX_FILE_BYTES = 1_000_000  # 1 MB per file read server-side
 DEFAULT_MAX_BATCH_FILES = 20
 DEFAULT_TRANSPORT = "stdio"
@@ -51,6 +53,16 @@ def _env_bool(name: str, default: bool) -> bool:
     return value.strip().lower() in _TRUE_VALUES
 
 
+def _think_style() -> str:
+    """OLLAMA_THINK_STYLE, coerced to a known value (unknown → default).
+
+    Lets non-Qwen models (DeepSeek-R1 distills, Llama, …) run without the
+    Qwen-only ``/think`` / ``/no_think`` switch, which is just prompt noise to
+    them and can mislead a lighter model."""
+    style = _env_str("OLLAMA_THINK_STYLE", DEFAULT_THINK_STYLE).strip().lower()
+    return style if style in THINK_STYLES else DEFAULT_THINK_STYLE
+
+
 @dataclass(frozen=True)
 class Settings:
     """Resolved configuration for a single server process."""
@@ -64,6 +76,7 @@ class Settings:
     max_file_bytes: int
     max_batch_files: int
     default_think: bool
+    think_style: str
     transport: str
     host: str
     port: int
@@ -98,6 +111,7 @@ def load_settings() -> Settings:
             "OLLAMA_MCP_MAX_BATCH_FILES", DEFAULT_MAX_BATCH_FILES
         ),
         default_think=_env_bool("OLLAMA_MCP_DEFAULT_THINK", True),
+        think_style=_think_style(),
         transport=_env_str("MCP_TRANSPORT", DEFAULT_TRANSPORT),
         host=_env_str("MCP_HOST", DEFAULT_HOST),
         port=_env_int("MCP_PORT", DEFAULT_PORT),

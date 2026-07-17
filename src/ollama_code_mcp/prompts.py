@@ -74,13 +74,26 @@ DIFF_REVIEW_SYSTEM = (
 
 
 def build_messages(
-    system: str, user_content: str, think: bool
+    system: str, user_content: str, think: bool, style: str = "qwen"
 ) -> list[dict[str, str]]:
-    """Build a Qwen3 chat message list with the appropriate think-mode switch."""
-    switch = "/think" if think else "/no_think"
+    """Build a chat message list, optionally with a think-mode switch.
+
+    ``style`` selects how the think toggle is expressed:
+
+    - ``"qwen"`` (default): append Qwen3's literal ``/think`` / ``/no_think``
+      token — the only way Ollama's Qwen3 template exposes the toggle.
+    - ``"none"``: append nothing. Use for models that don't understand the
+      Qwen switch (DeepSeek-R1 distills, Llama, …), where a stray ``/no_think``
+      is prompt noise that can mislead a lighter model into hallucinating. The
+      model's own default reasoning applies; ``split_thinking`` still strips any
+      ``<think>`` block it emits.
+    """
+    content = user_content.strip()
+    if style == "qwen":
+        content = f"{content}\n\n{'/think' if think else '/no_think'}"
     return [
         {"role": "system", "content": system},
-        {"role": "user", "content": f"{user_content.strip()}\n\n{switch}"},
+        {"role": "user", "content": content},
     ]
 
 
