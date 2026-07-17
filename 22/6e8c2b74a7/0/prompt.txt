@@ -1,0 +1,1 @@
+I have an existing repo here (dazzler) that I want to enable for entire.io. What is the appropriate workflow?
