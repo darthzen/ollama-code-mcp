@@ -53,14 +53,27 @@ def _env_bool(name: str, default: bool) -> bool:
     return value.strip().lower() in _TRUE_VALUES
 
 
+def coerce_think_style(value: str | None, default: str = DEFAULT_THINK_STYLE) -> str:
+    """Coerce an arbitrary think-style string to a known value.
+
+    Empty/blank or unrecognized input falls back to ``default``. Used both for
+    the ``OLLAMA_THINK_STYLE`` env default and for a per-call ``think_style``
+    override, so a caller can pick the right dialect (``"none"`` for a
+    DeepSeek/Llama model, ``"qwen"`` for a Qwen model) alongside a per-call
+    ``model`` without restarting the server."""
+    if not value or not value.strip():
+        return default
+    style = value.strip().lower()
+    return style if style in THINK_STYLES else default
+
+
 def _think_style() -> str:
     """OLLAMA_THINK_STYLE, coerced to a known value (unknown → default).
 
     Lets non-Qwen models (DeepSeek-R1 distills, Llama, …) run without the
     Qwen-only ``/think`` / ``/no_think`` switch, which is just prompt noise to
     them and can mislead a lighter model."""
-    style = _env_str("OLLAMA_THINK_STYLE", DEFAULT_THINK_STYLE).strip().lower()
-    return style if style in THINK_STYLES else DEFAULT_THINK_STYLE
+    return coerce_think_style(os.environ.get("OLLAMA_THINK_STYLE"), DEFAULT_THINK_STYLE)
 
 
 @dataclass(frozen=True)

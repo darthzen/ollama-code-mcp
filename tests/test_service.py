@@ -32,10 +32,12 @@ class FakeClient:
         self.response_content = response_content
         self.fail = fail
         self.calls: list[list[dict]] = []
+        self.model_calls: list[str | None] = []
         self.health = {"reachable": True, "base_url": "http://ollama.lan:11434", "configured_model": "qwen3:32b", "model_available": True, "available_models": ["qwen3:32b"], "latency_ms": 12.3}
 
     async def chat(self, messages, model=None, options=None):
         self.calls.append(messages)
+        self.model_calls.append(model)
         if self.fail:
             raise self.fail
         return {
@@ -64,6 +66,53 @@ async def test_generate_code_success_includes_header(tmp_path):
     assert "generate_code" in result
     assert "print('hi')" in result
     assert client.calls[0][1]["content"].endswith("/think")
+
+
+@pytest.mark.asyncio
+async def test_generate_code_uses_configured_model_by_default(tmp_path):
+    client = FakeClient()
+    service = CodeService(client, make_settings(tmp_path))
+    await service.generate_code("write a hello world script")
+    # No per-call override → client.chat gets model=None and falls back to Settings.model.
+    assert client.model_calls[0] is None
+
+
+@pytest.mark.asyncio
+async def test_generate_code_model_override_is_passed_to_client(tmp_path):
+    client = FakeClient()
+    service = CodeService(client, make_settings(tmp_path))
+    await service.generate_code("hi", model="erwan2/DeepSeek-R1-Distill-Qwen-1.5B:latest")
+    assert client.model_calls[0] == "erwan2/DeepSeek-R1-Distill-Qwen-1.5B:latest"
+
+
+@pytest.mark.asyncio
+async def test_think_style_override_suppresses_qwen_switch(tmp_path):
+    # Server default is "qwen" (appends /think); a per-call "none" must win so a
+    # non-Qwen model never sees the stray switch token.
+    client = FakeClient()
+    service = CodeService(client, make_settings(tmp_path, think_style="qwen"))
+    await service.generate_code("hi", think_style="none")
+    content = client.calls[0][1]["content"]
+    assert not content.endswith("/think")
+    assert "/no_think" not in content
+
+
+@pytest.mark.asyncio
+async def test_think_style_invalid_override_falls_back_to_configured(tmp_path):
+    client = FakeClient()
+    service = CodeService(client, make_settings(tmp_path, think_style="qwen"))
+    await service.generate_code("hi", think_style="bogus")
+    # Unknown style → configured "qwen" default still applies.
+    assert client.calls[0][1]["content"].endswith("/think")
+
+
+@pytest.mark.asyncio
+async def test_batch_refactor_model_override_applies_per_file(tmp_path):
+    (tmp_path / "a.py").write_text("x = 1\n")
+    client = FakeClient(response_content="```py\nx = 2\n```")
+    service = CodeService(client, make_settings(tmp_path))
+    await service.batch_refactor("*.py", "rename x", dry_run=True, model="llama3.1:latest")
+    assert client.model_calls[0] == "llama3.1:latest"
 
 
 @pytest.mark.asyncio

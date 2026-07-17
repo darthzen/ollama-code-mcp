@@ -17,7 +17,7 @@ from __future__ import annotations
 import difflib
 from typing import Any
 
-from .config import Settings
+from .config import Settings, coerce_think_style
 from .file_utils import glob_files, read_file, resolve_code_input, write_file
 from .ollama_client import (
     OllamaClient,
@@ -71,12 +71,22 @@ class CodeService:
     def _think(self, think: bool | None) -> bool:
         return self._settings.default_think if think is None else think
 
+    def _style(self, think_style: str) -> str:
+        """Per-call think_style override, falling back to the configured default."""
+        return coerce_think_style(think_style, self._settings.think_style)
+
     async def _run_chat(
-        self, tool_name: str, system: str, user_content: str, think: bool
+        self,
+        tool_name: str,
+        system: str,
+        user_content: str,
+        think: bool,
+        model: str = "",
+        think_style: str = "",
     ) -> str:
-        messages = build_messages(system, user_content, think, self._settings.think_style)
+        messages = build_messages(system, user_content, think, self._style(think_style))
         try:
-            result = await self._client.chat(messages)
+            result = await self._client.chat(messages, model=model or None)
         except _OLLAMA_ERRORS as exc:
             return _format_unavailable(tool_name, self._settings.base_url, str(exc))
         thinking, answer = split_thinking(result["content"])
@@ -90,6 +100,8 @@ class CodeService:
         language: str = "",
         context_file: str = "",
         think: bool | None = None,
+        model: str = "",
+        think_style: str = "",
     ) -> str:
         if not instruction.strip():
             raise ValueError("instruction must not be empty")
@@ -104,18 +116,26 @@ class CodeService:
             )
         parts.append(f"Task:\n{instruction.strip()}")
         return await self._run_chat(
-            "generate_code", GENERATE_SYSTEM, "\n\n".join(parts), self._think(think)
+            "generate_code", GENERATE_SYSTEM, "\n\n".join(parts), self._think(think),
+            model, think_style,
         )
 
     async def review_code(
-        self, code: str = "", file_path: str = "", focus: str = "", think: bool | None = None
+        self,
+        code: str = "",
+        file_path: str = "",
+        focus: str = "",
+        think: bool | None = None,
+        model: str = "",
+        think_style: str = "",
     ) -> str:
         content, label = resolve_code_input(code, file_path, self._settings)
         parts = [f"Code to review (source: {label}):\n```\n{content}\n```"]
         if focus.strip():
             parts.append(f"Focus areas: {focus.strip()}")
         return await self._run_chat(
-            "review_code", REVIEW_SYSTEM, "\n\n".join(parts), self._think(think)
+            "review_code", REVIEW_SYSTEM, "\n\n".join(parts), self._think(think),
+            model, think_style,
         )
 
     async def refactor_code(
@@ -124,6 +144,8 @@ class CodeService:
         code: str = "",
         file_path: str = "",
         think: bool | None = None,
+        model: str = "",
+        think_style: str = "",
     ) -> str:
         if not instruction.strip():
             raise ValueError("instruction must not be empty")
@@ -133,7 +155,8 @@ class CodeService:
             f"Instruction: {instruction.strip()}"
         )
         return await self._run_chat(
-            "refactor_code", REFACTOR_SYSTEM, user_content, self._think(think)
+            "refactor_code", REFACTOR_SYSTEM, user_content, self._think(think),
+            model, think_style,
         )
 
     async def fix_code(
@@ -142,13 +165,16 @@ class CodeService:
         file_path: str = "",
         error_message: str = "",
         think: bool | None = None,
+        model: str = "",
+        think_style: str = "",
     ) -> str:
         content, label = resolve_code_input(code, file_path, self._settings)
         parts = [f"Code with a bug (source: {label}):\n```\n{content}\n```"]
         if error_message.strip():
             parts.append(f"Observed error/symptom:\n{error_message.strip()}")
         return await self._run_chat(
-            "fix_code", FIX_SYSTEM, "\n\n".join(parts), self._think(think)
+            "fix_code", FIX_SYSTEM, "\n\n".join(parts), self._think(think),
+            model, think_style,
         )
 
     async def write_tests(
@@ -157,22 +183,31 @@ class CodeService:
         file_path: str = "",
         framework: str = "",
         think: bool | None = None,
+        model: str = "",
+        think_style: str = "",
     ) -> str:
         content, label = resolve_code_input(code, file_path, self._settings)
         parts = [f"Code to test (source: {label}):\n```\n{content}\n```"]
         if framework.strip():
             parts.append(f"Test framework: {framework.strip()}")
         return await self._run_chat(
-            "write_tests", TEST_SYSTEM, "\n\n".join(parts), self._think(think)
+            "write_tests", TEST_SYSTEM, "\n\n".join(parts), self._think(think),
+            model, think_style,
         )
 
     async def explain_code(
-        self, code: str = "", file_path: str = "", think: bool | None = None
+        self,
+        code: str = "",
+        file_path: str = "",
+        think: bool | None = None,
+        model: str = "",
+        think_style: str = "",
     ) -> str:
         content, label = resolve_code_input(code, file_path, self._settings)
         user_content = f"Code to explain (source: {label}):\n```\n{content}\n```"
         return await self._run_chat(
-            "explain_code", EXPLAIN_SYSTEM, user_content, self._think(think)
+            "explain_code", EXPLAIN_SYSTEM, user_content, self._think(think),
+            model, think_style,
         )
 
     # -- diff and batch tools ----------------------------------------------
@@ -183,6 +218,8 @@ class CodeService:
         diff_file: str = "",
         context: str = "",
         think: bool | None = None,
+        model: str = "",
+        think_style: str = "",
     ) -> str:
         diff = (diff or "").strip()
         diff_file = (diff_file or "").strip()
@@ -199,7 +236,8 @@ class CodeService:
         if context.strip():
             parts.append(f"PR context: {context.strip()}")
         return await self._run_chat(
-            "code_review_diff", DIFF_REVIEW_SYSTEM, "\n\n".join(parts), self._think(think)
+            "code_review_diff", DIFF_REVIEW_SYSTEM, "\n\n".join(parts), self._think(think),
+            model, think_style,
         )
 
     async def batch_refactor(
@@ -209,6 +247,8 @@ class CodeService:
         root_dir: str = "",
         dry_run: bool = True,
         think: bool | None = None,
+        model: str = "",
+        think_style: str = "",
     ) -> str:
         if not instruction.strip():
             raise ValueError("instruction must not be empty")
@@ -237,6 +277,7 @@ class CodeService:
             )
 
         think_resolved = self._think(think)
+        style = self._style(think_style)
         for path in files:
             label = str(path)
             try:
@@ -250,10 +291,10 @@ class CodeService:
                 f"Instruction: {instruction.strip()}"
             )
             messages = build_messages(
-                REFACTOR_SYSTEM, user_content, think_resolved, self._settings.think_style
+                REFACTOR_SYSTEM, user_content, think_resolved, style
             )
             try:
-                result = await self._client.chat(messages)
+                result = await self._client.chat(messages, model=model or None)
             except _OLLAMA_ERRORS as exc:
                 lines.append(f"  - {label}: OLLAMA ERROR ({exc})")
                 continue
