@@ -34,8 +34,16 @@ class PathAccessError(ValueError):
 
 
 def resolve_path(path: str, settings: Settings) -> Path:
-    """Resolve ``path`` (absolute or relative) and confine it to the allowed dir."""
-    base = Path(settings.allowed_base_dir)
+    """Resolve ``path`` (absolute or relative) and confine it to the allowed dir.
+
+    The base is realpath'd alongside the candidate. Comparing a resolved
+    candidate against an unresolved base rejects every path whenever the
+    allowed dir contains a symlink -- ``~/Developer`` pointing into iCloud
+    Drive, for instance, where the candidate resolves to the real
+    ``~/Library/Mobile Documents/...`` location and never appears to sit
+    under the configured base.
+    """
+    base = Path(os.path.realpath(settings.allowed_base_dir))
     candidate = Path(path)
     if not candidate.is_absolute():
         candidate = base / candidate

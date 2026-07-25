@@ -45,6 +45,37 @@ def test_resolve_path_rejects_escape(tmp_path):
         resolve_path("../secrets.txt", settings)
 
 
+def test_resolve_path_accepts_symlinked_base_dir(tmp_path):
+    """A symlinked allowed dir must not reject everything under it.
+
+    ``~/Developer`` symlinked into iCloud Drive is the real-world case: the
+    candidate realpath's to the link target, so an unresolved base makes
+    every path look like an escape.
+    """
+    real = tmp_path / "real"
+    real.mkdir()
+    (real / "foo.py").write_text("x = 1")
+    link = tmp_path / "link"
+    link.symlink_to(real, target_is_directory=True)
+
+    settings = make_settings(link)
+    assert resolve_path("foo.py", settings) == (real / "foo.py").resolve()
+    assert resolve_path(str(link / "foo.py"), settings) == (real / "foo.py").resolve()
+
+
+def test_resolve_path_rejects_escape_from_symlinked_base(tmp_path):
+    """Containment still holds when the base is a symlink."""
+    real = tmp_path / "real"
+    real.mkdir()
+    (tmp_path / "secrets.txt").write_text("secret")
+    link = tmp_path / "link"
+    link.symlink_to(real, target_is_directory=True)
+
+    settings = make_settings(link)
+    with pytest.raises(PathAccessError):
+        resolve_path("../secrets.txt", settings)
+
+
 def test_read_file_enforces_size_cap(tmp_path):
     settings = make_settings(tmp_path, max_file_bytes=10)
     (tmp_path / "big.txt").write_text("x" * 100)
