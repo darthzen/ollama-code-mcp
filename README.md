@@ -1,4 +1,6 @@
 # ollama-code-mcp
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fdarthzen%2Follama-code-mcp.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fdarthzen%2Follama-code-mcp?ref=badge_shield)
+
 
 An [MCP](https://modelcontextprotocol.io) server that lets Claude Code delegate
 coding tasks to a local (or LAN) [Ollama](https://ollama.com) instance running
@@ -228,3 +230,6 @@ operations, so they run offline and don't need a real Ollama instance.
 ## License
 
 MIT -- see [LICENSE](./LICENSE).
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fdarthzen%2Follama-code-mcp.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fdarthzen%2Follama-code-mcp?ref=badge_large)
