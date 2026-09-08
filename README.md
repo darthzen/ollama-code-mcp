@@ -3,7 +3,7 @@
 An [MCP](https://modelcontextprotocol.io) server that lets Claude Code delegate
 coding tasks to a local (or LAN) [Ollama](https://ollama.com) instance running
 a Qwen3 model. Point it at a GPU box on your network -- a Tesla V100 running
-`qwen3-coder:30b`, for example -- and Claude Code can hand off boilerplate
+`qwen3.8:27b-mtp-q8-precise`, for example -- and Claude Code can hand off boilerplate
 generation, test writing, diff review, and batch refactors to it instead of
 spending cloud tokens and context window on them.
 
@@ -83,7 +83,7 @@ runs on a dedicated GPU host:
       "command": "ollama-code-mcp",
       "env": {
         "OLLAMA_BASE_URL": "http://ollama.ash4d.com:11434",
-        "OLLAMA_MODEL": "qwen3-coder:30b",
+        "OLLAMA_MODEL": "qwen3.8:27b-mtp-q8-precise",
         "OLLAMA_MCP_ALLOWED_DIR": "/Users/you/code"
       }
     }
@@ -116,7 +116,7 @@ All configuration is via environment variables:
 | Variable | Default | Description |
 |---|---|---|
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Where Ollama listens. LAN addresses and bare `host:port` (scheme added automatically) are supported. |
-| `OLLAMA_MODEL` | `qwen3-coder` | Model tag to use, as shown by `ollama list` on the target host. |
+| `OLLAMA_MODEL` | `qwen3.8:27b-mtp-q8-precise` | Model tag to use, as shown by `ollama list` on the target host. |
 | `OLLAMA_TIMEOUT` | `900` | Request timeout in seconds. Defaults to 15 minutes to allow large generations/refactors on modest hardware. |
 | `OLLAMA_CONNECT_TIMEOUT` | `10` | TCP connect timeout in seconds. |
 | `OLLAMA_NUM_CTX` | `8192` | Context window passed to Ollama's `options.num_ctx`. |
@@ -138,7 +138,7 @@ for that turn. This server does that automatically based on each tool's
 its final answer in the response, so you get:
 
 ```
-[review_code] via qwen3-coder (4213 ms, 812 tokens)
+[review_code] via qwen3.8:27b-mtp-q8-precise (4213 ms, 812 tokens)
 
 <the actual review>
 

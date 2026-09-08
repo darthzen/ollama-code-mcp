@@ -6,7 +6,7 @@ import os
 from dataclasses import dataclass
 
 DEFAULT_BASE_URL = "http://localhost:11434"
-DEFAULT_MODEL = "qwen3-coder"
+DEFAULT_MODEL = "qwen3.8:27b-mtp-q8-precise"
 DEFAULT_TIMEOUT_SECONDS = 900.0  # 15 minutes: large-context refactors on a single GPU can be slow
 DEFAULT_CONNECT_TIMEOUT_SECONDS = 10.0
 DEFAULT_NUM_CTX = 8192
